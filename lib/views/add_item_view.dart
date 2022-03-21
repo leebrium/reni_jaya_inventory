@@ -1,7 +1,5 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:reni_jaya_inventory/models/item_model.dart';
 import 'package:reni_jaya_inventory/notifiers/item_notifier.dart';
@@ -9,8 +7,7 @@ import 'package:reni_jaya_inventory/services/storage.dart';
 import 'package:reni_jaya_inventory/shared/button_submit.dart';
 import 'package:reni_jaya_inventory/shared/constants.dart';
 import 'package:reni_jaya_inventory/shared/loading.dart';
-import 'package:reni_jaya_inventory/views/camera/camera.dart';
-import 'package:reni_jaya_inventory/views/home_view.dart';
+import 'package:reni_jaya_inventory/views/image_getter/image_getter.dart';
 
 class AddItemView extends StatefulWidget {
   final String? itemId;
@@ -87,7 +84,7 @@ class _AddItemViewState extends State<AddItemView> {
     final path = await Navigator.push(
       context,
       MaterialPageRoute(
-          fullscreenDialog: true, builder: (context) => CameraScreen()),
+          fullscreenDialog: true, builder: (context) => ImageGetter()),
     );
     setState(() => imagePath = path);
   }
