@@ -1,16 +1,22 @@
 import 'dart:async';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:reni_jaya_inventory/models/category_model.dart';
 import 'package:reni_jaya_inventory/models/item_model.dart';
-import 'package:reni_jaya_inventory/models/response_model.dart';
 import 'package:reni_jaya_inventory/models/user_data_model.dart';
-import 'package:reni_jaya_inventory/models/user_model.dart';
 import 'package:reni_jaya_inventory/extensions/string.dart';
 
 class DatabaseService {
+
+  static const fCreatedAt = "created_at";
+  static const fUpdatedAt = "updated_at";
+  static const fUserId = "uid";
+  static const fName = "name";
+  static const fEmail = "email";
+  static const fUserRole = "role";
+  static const fItemId = "item_id";
+  static const fItemName = "item_name";
+  static const fItemQuantity = "quantity";
+  static const fItemImagePath = "image_path";
+
   final _dbRef = FirebaseDatabase.instance.ref();
 
   DatabaseReference get _userDataRef {
@@ -21,14 +27,18 @@ class DatabaseService {
     return _dbRef.child('items');
   }
 
+  DatabaseReference get _categoryRef {
+    return _categoryRef.child('category');
+  }
+
   /* -> User Data */
 
   Future insertUserData(UserData userData) async {
     return await _userDataRef.child(userData.uid ?? '').setData({
-      'name': userData.name,
-      'email': userData.email,
-      'type': userData.type,
-      'created_at': ServerValue.timestamp,
+      fName: userData.name,
+      fEmail: userData.email,
+      fUserRole: userData.role,
+      fCreatedAt: ServerValue.timestamp,
     });
   }
 
@@ -36,13 +46,21 @@ class DatabaseService {
     final snapshot = await _userDataRef.child(uid).get();
     final data = (snapshot.value) as Map<String, dynamic>;
     return UserData(
-        uid: data['uid'],
-        name: data['name'],
-        email: data['email'],
-        type: data['type']);
+        uid: data[fUserId],
+        name: data[fName],
+        email: data[fEmail],
+        role: data[fUserRole]);
   }
 
   /* User Data  <- */
+
+  /* -> Category */
+
+  Stream<DatabaseEvent> initialCategoryEvent() {
+    return _categoryRef.orderByKey().onValue;
+  }
+
+  /* Category <- */
 
   /* -> Item */
 
@@ -60,7 +78,7 @@ class DatabaseService {
 
   Stream<DatabaseEvent> searchItemsEvent(String query) {
     return _itemRef
-        .orderByChild("name")
+        .orderByChild(fName)
         .startAt(query)
         .endAt(query + "\uf8ff")
         .onValue;
@@ -68,24 +86,28 @@ class DatabaseService {
 
   Future<Item?> getItemDetails(String id) async {
     final snapshot = await _itemRef.child(id).get();
-    final data = snapshot.value as Map;
+    var data = snapshot.value as Map;
+    data[fItemId] = id;
 
-    return Item(
-        itemId: id,
-        name: data['name'],
-        quantity: data['quantity'],
-        imagePath: data['image_path']);
+    return Item.fromDatabase(data);
   }
 
-  Future<void> updateItem(Item item) async {
-    final ref = item.itemId == null ? _itemRef.push() : _itemRef.child(item.itemId!);
-    return await ref.update({
-      "name": item.name,
-      "quantity": item.quantity,
-      "image_path": item.imagePath,
-      "created_at": ServerValue.timestamp,
-      "updated_at": ServerValue.timestamp,
-    });
+  // Insert or Update Item
+  Future<void> pushItem(Item item) async {
+    final bool isInsert = item.itemId == null;
+    final ref = isInsert ? _itemRef.push() : _itemRef.child(item.itemId!);
+    Map<String, Object?> data = {
+      fItemName: item.name,
+      fItemQuantity: item.quantity,
+      fItemImagePath: item.imagePath,
+      fUpdatedAt: ServerValue.timestamp,
+    };
+
+    if (isInsert) {
+      data[fCreatedAt] = ServerValue.timestamp;
+    }
+
+    return await ref.update(data);
   }
 
   /* Item <- */

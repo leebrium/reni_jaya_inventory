@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:reni_jaya_inventory/models/user_model.dart';
 import 'package:reni_jaya_inventory/notifiers/item_notifier.dart';
 import 'package:reni_jaya_inventory/services/auth.dart';
 import 'package:reni_jaya_inventory/views/wrapper_view.dart';

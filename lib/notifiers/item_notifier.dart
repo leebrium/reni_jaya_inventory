@@ -31,8 +31,8 @@ class ItemNotifier extends ChangeNotifier {
   void _addItemsFromEvent(DatabaseEvent event) {
     final data = event.snapshot.value as Map;
     data.forEach((key, value) {
-      _items.add(
-          Item(itemId: key, name: value['name'], quantity: value['quantity']));
+      data[key][DatabaseService.fItemId] = key;
+      _items.add(Item.fromDatabase(data[key]));
     });
     _currentId = items.last.itemId;
     notifyListeners();
@@ -55,7 +55,7 @@ class ItemNotifier extends ChangeNotifier {
     return _dbService.getItemDetails(id);
   }
 
-  Future<void> insertNewItem(Item item) async {
-    return await _dbService.updateItem(item);
+  Future<void> pushItem(Item item) async {
+    return await _dbService.pushItem(item);
   }
 }

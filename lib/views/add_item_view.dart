@@ -103,7 +103,7 @@ class _AddItemViewState extends State<AddItemView> {
 
       if (resultStorage != null) {
         item.imagePath = resultStorage.imageUrl;
-        await itemNotifier.insertNewItem(item);
+        await itemNotifier.pushItem(item);
         Navigator.pop(context);
       }
     } else {
@@ -122,7 +122,7 @@ class _AddItemViewState extends State<AddItemView> {
       }
 
       item.itemId = widget.itemId;
-      await itemNotifier.insertNewItem(item);
+      await itemNotifier.pushItem(item);
       Navigator.pop(this.context);
       itemNotifier.notifyListeners();
     }
