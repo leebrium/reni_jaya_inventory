@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:reni_jaya_inventory/notifiers/category_notifier.dart';
 import 'package:reni_jaya_inventory/notifiers/item_notifier.dart';
 import 'package:reni_jaya_inventory/services/auth.dart';
 import 'package:reni_jaya_inventory/views/wrapper_view.dart';
@@ -27,7 +28,8 @@ class MyApp extends StatelessWidget {
           create: (context) => context.read<AuthService>().authStateChanges,
           initialData: null,
         ),
-        ChangeNotifierProvider<ItemNotifier>(create: (_) => ItemNotifier(),)
+        ChangeNotifierProvider<CategoryNotifier>(create: (_) => CategoryNotifier()),
+        ChangeNotifierProvider<ItemNotifier>(create: (_) => ItemNotifier()),
       ],
       child: const MaterialApp(
         home: WrapperView(),

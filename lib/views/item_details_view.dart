@@ -22,6 +22,7 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
           fullscreenDialog: true,
           builder: (context) => AddItemView(
                 itemId: widget.itemId,
+                isCategory: false,
               )),
     );
   }

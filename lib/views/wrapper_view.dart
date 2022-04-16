@@ -14,7 +14,9 @@ class WrapperView extends StatelessWidget {
     if (user == null) {
       return const AuthenticateView();
     } else {
-      return HomeView();
+      return const HomeView(
+        type: HomeViewType.category,
+      );
     }
   }
 }

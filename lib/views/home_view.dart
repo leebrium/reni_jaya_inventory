@@ -1,28 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:reni_jaya_inventory/models/item_model.dart';
+import 'package:reni_jaya_inventory/notifiers/category_notifier.dart';
 import 'package:reni_jaya_inventory/notifiers/item_notifier.dart';
-import 'package:reni_jaya_inventory/shared/loading.dart';
+import 'package:reni_jaya_inventory/shared/constants.dart';
 import 'package:reni_jaya_inventory/views/add_item_view.dart';
 import 'package:reni_jaya_inventory/views/item_details_view.dart';
 
+enum HomeViewType { category, item }
+
 class HomeView extends StatefulWidget {
-  HomeView({Key? key}) : super(key: key);
+  final HomeViewType type;
+  final String? categoryId;
+  const HomeView({Key? key, required this.type, this.categoryId})
+      : super(key: key);
 
   @override
   State<HomeView> createState() => _HomeViewState();
 }
 
 class _HomeViewState extends State<HomeView> {
-  FocusNode _focus = FocusNode();
-  TextEditingController _controller = TextEditingController();
+  final FocusNode _focus = FocusNode();
+  final TextEditingController _controller = TextEditingController();
 
-  IconData _appBarIcon = Icons.search;
+  bool get isCategory {
+    return _currentType == HomeViewType.category;
+  }
+
+  IconData? _appBarIcon;
+  HomeViewType? _currentType;
 
   @override
   void initState() {
     super.initState();
     _focus.addListener(_onFocusChange);
+    _currentType = widget.type;
+    _appBarIcon = isCategory ? Icons.search : Icons.arrow_back;
+    if (widget.categoryId != null) {
+      Provider.of<ItemNotifier>(context, listen: false).setId(widget.categoryId!);
+    }
   }
 
   @override
@@ -34,22 +49,30 @@ class _HomeViewState extends State<HomeView> {
 
   void _onFocusChange() {
     setState(() {
-      _appBarIcon = _focus.hasFocus ? Icons.close : Icons.search;
+      _appBarIcon = _focus.hasFocus
+          ? Icons.close
+          : isCategory
+              ? Icons.search
+              : Icons.arrow_back;
     });
   }
 
   void _appBarIconPressed() {
-    if (_appBarIcon == Icons.search) {
-      setState(() {
-        _appBarIcon = Icons.close;
-      });
-      _focus.requestFocus();
+    if (isCategory) {
+      if (_appBarIcon == Icons.search) {
+        setState(() {
+          _appBarIcon = Icons.close;
+        });
+        _focus.requestFocus();
+      } else {
+        setState(() {
+          _appBarIcon = Icons.search;
+        });
+        _controller.clear();
+        _focus.unfocus();
+      }
     } else {
-      setState(() {
-        _appBarIcon = Icons.search;
-      });
-      _controller.clear();
-      _focus.unfocus();
+      Navigator.pop(context);
     }
   }
 
@@ -58,63 +81,97 @@ class _HomeViewState extends State<HomeView> {
       await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ItemDetailsView(itemId: id),
+            builder: (context) => isCategory
+                ? HomeView(
+                    type: HomeViewType.item,
+                    categoryId: id,
+                  )
+                : ItemDetailsView(itemId: id),
           ));
     }
   }
 
-  void _onTapAddItem() async {
+  void _onTapAddItem(BuildContext context) async {
     await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => AddItemView(),
+          builder: (context) => AddItemView(isCategory: isCategory),
         ));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ItemNotifier>(
-      builder: (context, model, child) {
-        return Scaffold(
-            appBar: AppBar(
-              leading: IconButton(
-                icon: Icon(_appBarIcon),
+  Scaffold _getScaffold(dynamic data) {
+    CategoryNotifier? _categoryNotifier;
+    ItemNotifier? _itemNotifier;
+    if (isCategory) {
+      _categoryNotifier = data as CategoryNotifier;
+    } else {
+      _itemNotifier = data as ItemNotifier;
+    }
+    return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(_appBarIcon),
+            color: Colors.white,
+            onPressed: _appBarIconPressed,
+          ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  cursorColor: Colors.white,
+                  controller: _controller,
+                  focusNode: _focus,
+                  decoration: InputDecoration(
+                    hintText: " Cari " + (isCategory ? "Kategori" : "Varian") + "...",
+                  ),
+                  onSubmitted: (cal) {
+                    if (isCategory) {
+                      _categoryNotifier?.searchCategories(cal);
+                    } else {
+                      _itemNotifier?.searchItems(cal);
+                    }
+                  },
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
                 color: Colors.white,
-                onPressed: _appBarIconPressed,
+                onPressed: () {
+                  _onTapAddItem(context);
+                }
               ),
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextField(
-                      cursorColor: Colors.white,
-                      controller: _controller,
-                      focusNode: _focus,
-                      decoration: InputDecoration(
-                        hintText: ' Cari...',
-                      ),
-                      onSubmitted: (cal) {
-                        model.searchItems(cal);
-                      },
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add_circle_outline),
-                    color: Colors.white,
-                    onPressed: _onTapAddItem,
-                  ),
-                ],
+            ],
+          ),
+        ),
+        body: Container(
+          padding: const EdgeInsets.only(top: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: Text(
+                  isCategory ? "KATEGORI" : "VARIAN",
+                  style: textHeaderStyle,
+                  textAlign: TextAlign.left,
+                ),
               ),
-            ),
-            body: Scrollbar(
-                child: NotificationListener<ScrollEndNotification>(
-              child: Padding(
-                padding: EdgeInsets.only(top: 12),
+              const SizedBox(
+                height: 8,
+              ),
+              Expanded(
                 child: ListView.builder(
-                    itemCount: model.items.length,
+                    itemCount: isCategory
+                        ? _categoryNotifier?.categories.length
+                        : _itemNotifier?.items.length,
                     itemBuilder: (context, index) {
                       return GestureDetector(
-                        onTap: () => {_onTapItem(model.items[index].itemId)},
+                        onTap: () => {
+                          _onTapItem(isCategory
+                              ? _categoryNotifier?.categories[index].categoryId
+                              : _itemNotifier?.items[index].itemId),
+                        },
                         child: Container(
                           margin: const EdgeInsets.only(
                               top: 4, left: 8, right: 8, bottom: 4),
@@ -134,16 +191,24 @@ class _HomeViewState extends State<HomeView> {
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: Text("${model.items[index].name}"),
+                                child: Text(
+                                  isCategory
+                                      ? _categoryNotifier
+                                              ?.categories[index].name ??
+                                          ""
+                                      : _itemNotifier?.items[index].name ?? "",
+                                ),
                               ),
                               SizedBox(
                                 width: 30,
                                 child: Text(
-                                  "${model.items[index].quantity}",
+                                  isCategory
+                                      ? ""
+                                      : "${_itemNotifier?.items[index].quantity}",
                                   textAlign: TextAlign.right,
                                 ),
                               ),
-                              Icon(Icons.arrow_right),
+                              const Icon(Icons.arrow_right),
                             ],
                           ),
                         ),
@@ -151,13 +216,23 @@ class _HomeViewState extends State<HomeView> {
                       // Text(model.items[index].name);
                     }),
               ),
-              onNotification: (notification) {
-                // For pagination
-                // model.fetchItems();
-                return true;
-              },
-            )));
-      },
-    );
+            ],
+          ),
+        ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return isCategory
+        ? Consumer<CategoryNotifier>(
+            builder: (context, model, child) {
+              return _getScaffold(model);
+            },
+          )
+        : Consumer<ItemNotifier>(
+          builder: (context, model, child) {
+            return _getScaffold(model);
+          },
+        );
   }
 }

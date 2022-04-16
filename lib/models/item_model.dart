@@ -6,11 +6,18 @@ class Item {
   int quantity;
   String? imagePath;
 
-  Item({this.itemId, required this.name, required this.quantity, this.imagePath});
+  Item(
+      {this.itemId,
+      required this.name,
+      required this.quantity,
+      this.imagePath});
 
-  Item.fromDatabase(dynamic data) :
-    itemId = data[DatabaseService.fItemId],
-    name = data[DatabaseService.fItemName] ?? "",
-    quantity = data[DatabaseService.fItemQuantity] ?? 0,
-    imagePath =  data[DatabaseService.fItemImagePath];
+  factory Item.fromDatabase(Map data, [String? id]) {
+    return Item(
+      itemId: data[DatabaseService.fItemId] ?? id,
+      name: data[DatabaseService.fItemName],
+      quantity: data[DatabaseService.fItemQuantity],
+      imagePath: data[DatabaseService.fItemImagePath],
+    );
+  }
 }

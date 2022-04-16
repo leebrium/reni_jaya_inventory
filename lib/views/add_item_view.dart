@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:reni_jaya_inventory/models/category_model.dart';
 import 'package:reni_jaya_inventory/models/item_model.dart';
+import 'package:reni_jaya_inventory/notifiers/category_notifier.dart';
 import 'package:reni_jaya_inventory/notifiers/item_notifier.dart';
 import 'package:reni_jaya_inventory/services/storage.dart';
 import 'package:reni_jaya_inventory/shared/button_submit.dart';
@@ -11,7 +13,9 @@ import 'package:reni_jaya_inventory/views/image_getter/image_getter.dart';
 
 class AddItemView extends StatefulWidget {
   final String? itemId;
-  const AddItemView({Key? key, this.itemId}) : super(key: key);
+  final bool isCategory;
+  const AddItemView({Key? key, this.itemId, required this.isCategory})
+      : super(key: key);
 
   @override
   State<AddItemView> createState() => _AddItemViewState();
@@ -37,9 +41,9 @@ class _AddItemViewState extends State<AddItemView> {
   Widget _imageView(BuildContext context, Item? item) {
     return Stack(children: [
       Padding(
-        padding: EdgeInsets.only(top: 5, bottom: 5),
+        padding: const EdgeInsets.only(top: 5, bottom: 5),
         child: Container(
-          padding: EdgeInsets.only(top: 5, bottom: 5),
+          padding: const EdgeInsets.only(top: 5, bottom: 5),
           width: MediaQuery.of(context).size.width,
           alignment: Alignment.center,
           height: 250,
@@ -71,7 +75,7 @@ class _AddItemViewState extends State<AddItemView> {
         child: Container(
           padding: EdgeInsets.only(left: 5, right: 5),
           color: Colors.white,
-          child: Text(
+          child: const Text(
             'Gambar',
             style: TextStyle(fontSize: 15, color: Colors.blue),
           ),
@@ -89,7 +93,13 @@ class _AddItemViewState extends State<AddItemView> {
     setState(() => imagePath = path);
   }
 
-  void _saveData(BuildContext context, Item item) async {
+  void _saveCategory(Category cat) async {
+    final catNotifier = Provider.of<CategoryNotifier>(context, listen: false);
+    await catNotifier.pushCategory(cat);
+    Navigator.pop(context);
+  }
+
+  void _saveItem(BuildContext context, Item item) async {
     final itemNotifier = Provider.of<ItemNotifier>(context, listen: false);
     if (widget.itemId == null) {
       if (imagePath == null) {
@@ -128,60 +138,118 @@ class _AddItemViewState extends State<AddItemView> {
     }
   }
 
+  Widget _nameTextField() {
+    final infoString = widget.isCategory ? "Varian" : "Barang";
+    return TextFormField(
+      validator: (val) {
+        if (val!.isEmpty) {
+          return "Masukkan Nama " + infoString;
+        } else {
+          return null;
+        }
+      },
+      controller: _nameFieldController,
+      decoration: textInputDecoration.copyWith(labelText: "Nama " + infoString),
+      style: const TextStyle(fontSize: 20),
+    );
+  }
+
+  Widget _submitButton() {
+    return CustomButtonSubmit(
+      onPressed: () {
+        if (_formKey.currentState!.validate()) {
+          if (widget.isCategory) {
+            Category cat = Category(name: _nameFieldController.text);
+            _saveCategory(cat);
+          } else {
+            Item item = Item(
+                name: _nameFieldController.text,
+                quantity: int.parse(_quantityFieldController.text));
+            _saveItem(context, item);
+          }
+        }
+      },
+      height: 40,
+      text: "Simpan",
+      width: 120,
+    );
+  }
+
   Widget _scrollView(BuildContext context, Item? item) {
     return SingleChildScrollView(
       child: Form(
           key: _formKey,
           child: Padding(
-            padding: EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 8),
-            child: Column(
-              children: [
-                TextFormField(
-                  validator: (val) {
-                    if (val!.isEmpty) {
-                      return "Masukkan Nama Barang";
-                    } else {
-                      return null;
-                    }
-                  },
-                  controller: _nameFieldController,
-                  decoration:
-                      textInputDecoration.copyWith(labelText: "Nama Barang"),
-                  style: TextStyle(fontSize: 20),
-                ),
-                SizedBox(height: 12),
-                TextFormField(
-                  validator: (val) {
-                    if (val == "") {
-                      _quantityFieldController.text = "1";
-                    }
-                    return null;
-                  },
-                  controller: _quantityFieldController,
-                  decoration: textInputDecoration.copyWith(labelText: "Stok"),
-                  style: TextStyle(fontSize: 20),
-                  keyboardType: TextInputType.number,
-                ),
-                SizedBox(height: 16),
-                _imageView(context, item),
-                SizedBox(height: 20),
-                CustomButtonSubmit(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      Item item = Item(
-                          name: _nameFieldController.text,
-                          quantity: int.parse(_quantityFieldController.text));
-                      _saveData(context, item);
-                    }
-                  },
-                  height: 40,
-                  text: "Simpan",
-                  width: 120,
-                )
-              ],
-            ),
+            padding:
+                const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 8),
+            child: widget.isCategory
+                ? Column(
+                    children: [
+                      _nameTextField(),
+                      const SizedBox(height: 20),
+                      _submitButton()
+                    ],
+                  )
+                : Column(
+                    children: [
+                      _nameTextField(),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        validator: (val) {
+                          if (val == "") {
+                            _quantityFieldController.text = "1";
+                          }
+                          return null;
+                        },
+                        controller: _quantityFieldController,
+                        decoration:
+                            textInputDecoration.copyWith(labelText: "Stok"),
+                        style: const TextStyle(fontSize: 20),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 16),
+                      _imageView(context, item),
+                      const SizedBox(height: 20),
+                      _submitButton()
+                    ],
+                  ),
           )),
     );
+  }
+
+  Widget _addItemContentView() {
+    return FutureBuilder<Item?>(
+        future:
+            Provider.of<ItemNotifier>(context).getItemDetails(widget.itemId!),
+        builder: (BuildContext context, AsyncSnapshot<Item?> snapshot) {
+          _nameFieldController.text = snapshot.data?.name ?? "";
+          _quantityFieldController.text =
+              snapshot.data?.quantity.toString() ?? "1";
+          networkImagePath = snapshot.data?.imagePath;
+          if (snapshot.hasData) {
+            return _scrollView(context, snapshot.data);
+          } else {
+            return const Center(
+              child: Text('Kosong'),
+            );
+          }
+        });
+  }
+
+  Widget _addCategoryContentView() {
+    return FutureBuilder<Category?>(
+        future: Provider.of<CategoryNotifier>(context)
+            .getCategoryDetails(widget.itemId!),
+        builder: (BuildContext context, AsyncSnapshot<Category?> snapshot) {
+          _nameFieldController.text = snapshot.data?.name ?? "";
+          if (snapshot.hasData) {
+            return _scrollView(context, null);
+          } else {
+            return const Center(
+              child: Text('Kosong'),
+            );
+          }
+        });
   }
 
   @override
@@ -194,25 +262,11 @@ class _AddItemViewState extends State<AddItemView> {
           ),
         ),
         body: _loading
-            ? Loading()
+            ? const Loading()
             : widget.itemId != null
-                ? FutureBuilder<Item?>(
-                    future: Provider.of<ItemNotifier>(context)
-                        .getItemDetails(widget.itemId!),
-                    builder:
-                        (BuildContext context, AsyncSnapshot<Item?> snapshot) {
-                      _nameFieldController.text = snapshot.data?.name ?? "";
-                      _quantityFieldController.text =
-                          snapshot.data?.quantity.toString() ?? "1";
-                      networkImagePath = snapshot.data?.imagePath;
-                      if (snapshot.hasData) {
-                        return _scrollView(context, snapshot.data);
-                      } else {
-                        return Center(
-                          child: Text('Kosong'),
-                        );
-                      }
-                    })
+                ? widget.isCategory
+                    ? _addCategoryContentView()
+                    : _addItemContentView()
                 : _scrollView(context, null));
   }
 }
