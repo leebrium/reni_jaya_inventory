@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:reni_jaya_inventory/notifiers/category_notifier.dart';
 import 'package:reni_jaya_inventory/notifiers/item_notifier.dart';
 import 'package:reni_jaya_inventory/shared/constants.dart';
+import 'package:reni_jaya_inventory/shared/utils.dart';
 import 'package:reni_jaya_inventory/views/add_item_view.dart';
 import 'package:reni_jaya_inventory/views/item_details_view.dart';
 
@@ -11,7 +12,9 @@ enum HomeViewType { category, item }
 class HomeView extends StatefulWidget {
   final HomeViewType type;
   final String? categoryId;
-  const HomeView({Key? key, required this.type, this.categoryId})
+  final String? categoryName;
+  const HomeView(
+      {Key? key, required this.type, this.categoryId, this.categoryName})
       : super(key: key);
 
   @override
@@ -36,7 +39,8 @@ class _HomeViewState extends State<HomeView> {
     _currentType = widget.type;
     _appBarIcon = isCategory ? Icons.search : Icons.arrow_back;
     if (widget.categoryId != null) {
-      Provider.of<ItemNotifier>(context, listen: false).setId(widget.categoryId!);
+      Provider.of<ItemNotifier>(context, listen: false)
+          .setId(widget.categoryId!);
     }
   }
 
@@ -76,7 +80,7 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  void _onTapItem(String? id) async {
+  void _onTapItem(String? id, String? categoryName) async {
     if (id != null) {
       await Navigator.push(
           context,
@@ -85,6 +89,7 @@ class _HomeViewState extends State<HomeView> {
                 ? HomeView(
                     type: HomeViewType.item,
                     categoryId: id,
+                    categoryName: categoryName,
                   )
                 : ItemDetailsView(itemId: id),
           ));
@@ -107,6 +112,8 @@ class _HomeViewState extends State<HomeView> {
     } else {
       _itemNotifier = data as ItemNotifier;
     }
+    bool isEmptyCategory = isCategory && _categoryNotifier!.categories.isEmpty;
+    bool isEmptyItems = !isCategory && _itemNotifier!.items.isEmpty;
     return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -123,7 +130,8 @@ class _HomeViewState extends State<HomeView> {
                   controller: _controller,
                   focusNode: _focus,
                   decoration: InputDecoration(
-                    hintText: " Cari " + (isCategory ? "Kategori" : "Varian") + "...",
+                    hintText:
+                        " Cari " + (isCategory ? "Kategori" : "Varian") + "...",
                   ),
                   onSubmitted: (cal) {
                     if (isCategory) {
@@ -135,90 +143,108 @@ class _HomeViewState extends State<HomeView> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.add_circle_outline),
-                color: Colors.white,
-                onPressed: () {
-                  _onTapAddItem(context);
-                }
-              ),
+                  icon: const Icon(Icons.add_circle_outline),
+                  color: Colors.white,
+                  onPressed: () {
+                    _onTapAddItem(context);
+                  }),
             ],
           ),
         ),
-        body: Container(
-          padding: const EdgeInsets.only(top: 12, bottom: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Text(
-                  isCategory ? "KATEGORI" : "VARIAN",
-                  style: textHeaderStyle,
-                  textAlign: TextAlign.left,
-                ),
-              ),
-              const SizedBox(
-                height: 8,
-              ),
-              Expanded(
-                child: ListView.builder(
-                    itemCount: isCategory
-                        ? _categoryNotifier?.categories.length
-                        : _itemNotifier?.items.length,
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        onTap: () => {
-                          _onTapItem(isCategory
-                              ? _categoryNotifier?.categories[index].categoryId
-                              : _itemNotifier?.items[index].itemId),
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(
-                              top: 4, left: 8, right: 8, bottom: 4),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  spreadRadius: 1,
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ]),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  isCategory
-                                      ? _categoryNotifier
-                                              ?.categories[index].name ??
-                                          ""
-                                      : _itemNotifier?.items[index].name ?? "",
-                                ),
-                              ),
-                              SizedBox(
-                                width: 30,
-                                child: Text(
-                                  isCategory
-                                      ? ""
-                                      : "${_itemNotifier?.items[index].quantity}",
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              const Icon(Icons.arrow_right),
-                            ],
+        body: isEmptyCategory
+            ? getEmptyViewWithMessage(
+                "Belum ada kategori, Silahkan tambahan kategori")
+            : isEmptyItems
+                ? getEmptyViewWithMessage(
+                    "Belum ada varian " + (widget.categoryName ?? "") + ", Silahkan tambahkan varian")
+                : Container(
+                    padding: const EdgeInsets.only(top: 12, bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12),
+                          child: Text(
+                            isCategory
+                                ? "KATEGORI"
+                                : widget.categoryName ?? "VARIAN",
+                            style: textHeaderStyle,
+                            textAlign: TextAlign.left,
                           ),
                         ),
-                      );
-                      // Text(model.items[index].name);
-                    }),
-              ),
-            ],
-          ),
-        ));
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        Expanded(
+                          child: ListView.builder(
+                              itemCount: isCategory
+                                  ? _categoryNotifier?.categories.length
+                                  : _itemNotifier?.items.length,
+                              itemBuilder: (context, index) {
+                                return GestureDetector(
+                                  onTap: () => {
+                                    _onTapItem(
+                                        isCategory
+                                            ? _categoryNotifier
+                                                ?.categories[index].categoryId
+                                            : _itemNotifier
+                                                ?.items[index].itemId,
+                                        isCategory
+                                            ? _categoryNotifier
+                                                ?.categories[index].name
+                                            : null),
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.only(
+                                        top: 4, left: 8, right: 8, bottom: 4),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.5),
+                                            spreadRadius: 1,
+                                            blurRadius: 2,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            isCategory
+                                                ? _categoryNotifier
+                                                        ?.categories[index]
+                                                        .name ??
+                                                    ""
+                                                : _itemNotifier
+                                                        ?.items[index].name ??
+                                                    "",
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 30,
+                                          child: Text(
+                                            isCategory
+                                                ? ""
+                                                : "${_itemNotifier?.items[index].quantity}",
+                                            textAlign: TextAlign.right,
+                                          ),
+                                        ),
+                                        const Icon(Icons.arrow_right),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                                // Text(model.items[index].name);
+                              }),
+                        ),
+                      ],
+                    ),
+                  ));
   }
 
   @override
@@ -230,9 +256,9 @@ class _HomeViewState extends State<HomeView> {
             },
           )
         : Consumer<ItemNotifier>(
-          builder: (context, model, child) {
-            return _getScaffold(model);
-          },
-        );
+            builder: (context, model, child) {
+              return _getScaffold(model);
+            },
+          );
   }
 }

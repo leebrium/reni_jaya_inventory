@@ -31,11 +31,13 @@ class _AddItemViewState extends State<AddItemView> {
   bool _loading = false;
 
   Widget _takePictureButton() {
-    return CustomButtonSubmit(
+    return IconButton(
       onPressed: _openCamera,
-      width: 160,
-      height: 40,
-      text: "Ambil Gambar",
+      icon: const Icon(
+        Icons.add_a_photo,
+        color: Colors.blue,
+        size: 32,
+      ),
     );
   }
 
