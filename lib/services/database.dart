@@ -20,6 +20,7 @@ class DatabaseService {
   static const fItemName = "item_name";
   static const fItemQuantity = "quantity";
   static const fItemImagePath = "image_path";
+  static const fItemDescription = "item_description";
 
   final _dbRef = FirebaseDatabase.instance.ref();
 
@@ -133,6 +134,7 @@ class DatabaseService {
       fItemName: item.name,
       fItemQuantity: item.quantity,
       fItemImagePath: item.imagePath,
+      fItemDescription: item.description,
       fUpdatedAt: ServerValue.timestamp,
     };
 

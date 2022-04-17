@@ -145,7 +145,7 @@ class _HomeViewState extends State<HomeView> {
           ),
         ),
         body: Container(
-          padding: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.only(top: 12, bottom: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

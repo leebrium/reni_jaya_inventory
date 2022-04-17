@@ -17,7 +17,7 @@ const textInputStyle = TextStyle(
 
 const textHeaderStyle = TextStyle(
   color: Colors.black,
-  fontSize: 20,
+  fontSize: 16,
   fontWeight: FontWeight.bold,
 );
 

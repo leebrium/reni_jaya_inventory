@@ -25,6 +25,7 @@ class _AddItemViewState extends State<AddItemView> {
   final _formKey = GlobalKey<FormState>();
   final _nameFieldController = TextEditingController();
   final _quantityFieldController = TextEditingController();
+  final _descFieldController = TextEditingController();
   String? imagePath;
   String? networkImagePath;
   bool _loading = false;
@@ -154,6 +155,30 @@ class _AddItemViewState extends State<AddItemView> {
     );
   }
 
+  Widget _quantityTextField() {
+    return TextFormField(
+      validator: (val) {
+        if (val == "") {
+          _quantityFieldController.text = "1";
+        }
+        return null;
+      },
+      controller: _quantityFieldController,
+      decoration: textInputDecoration.copyWith(labelText: "Stok"),
+      style: const TextStyle(fontSize: 20),
+      keyboardType: TextInputType.number,
+    );
+  }
+
+  Widget _descTextField() {
+    return TextFormField(
+      controller: _descFieldController,
+      decoration: textInputDecoration.copyWith(labelText: "Deskripsi"),
+      maxLines: null,
+      style: const TextStyle(fontSize: 20),
+    );
+  }
+
   Widget _submitButton() {
     return CustomButtonSubmit(
       onPressed: () {
@@ -164,7 +189,8 @@ class _AddItemViewState extends State<AddItemView> {
           } else {
             Item item = Item(
                 name: _nameFieldController.text,
-                quantity: int.parse(_quantityFieldController.text));
+                quantity: int.parse(_quantityFieldController.text),
+                description: _descFieldController.text);
             _saveItem(context, item);
           }
         }
@@ -194,20 +220,10 @@ class _AddItemViewState extends State<AddItemView> {
                     children: [
                       _nameTextField(),
                       const SizedBox(height: 12),
-                      TextFormField(
-                        validator: (val) {
-                          if (val == "") {
-                            _quantityFieldController.text = "1";
-                          }
-                          return null;
-                        },
-                        controller: _quantityFieldController,
-                        decoration:
-                            textInputDecoration.copyWith(labelText: "Stok"),
-                        style: const TextStyle(fontSize: 20),
-                        keyboardType: TextInputType.number,
-                      ),
+                      _quantityTextField(),
                       const SizedBox(height: 16),
+                      _descTextField(),
+                      const SizedBox(height: 20),
                       _imageView(context, item),
                       const SizedBox(height: 20),
                       _submitButton()
@@ -225,6 +241,7 @@ class _AddItemViewState extends State<AddItemView> {
           _nameFieldController.text = snapshot.data?.name ?? "";
           _quantityFieldController.text =
               snapshot.data?.quantity.toString() ?? "1";
+          _descFieldController.text = snapshot.data?.description ?? "";
           networkImagePath = snapshot.data?.imagePath;
           if (snapshot.hasData) {
             return _scrollView(context, snapshot.data);
