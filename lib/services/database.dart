@@ -70,7 +70,7 @@ class DatabaseService {
 
   Stream<DatabaseEvent> searchCategoriesEvent(String query) {
     return _categoryRef
-        .orderByChild(fName)
+        .orderByChild(fCategoryName)
         .startAt(query)
         .endAt(query + "\uf8ff")
         .onValue;
@@ -111,7 +111,7 @@ class DatabaseService {
   
   Stream<DatabaseEvent> searchItemsEvent(String categoryId, String query) {
     return _itemRef(categoryId)
-        .orderByChild(fName)
+        .orderByChild(fItemName)
         .startAt(query)
         .endAt(query + "\uf8ff")
         .onValue;
