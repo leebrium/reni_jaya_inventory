@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reni_jaya_inventory/notifiers/category_notifier.dart';
 import 'package:reni_jaya_inventory/notifiers/item_notifier.dart';
+import 'package:reni_jaya_inventory/notifiers/user_notifier.dart';
 import 'package:reni_jaya_inventory/shared/constants.dart';
 import 'package:reni_jaya_inventory/shared/utils.dart';
 import 'package:reni_jaya_inventory/views/add_item_view.dart';
@@ -112,8 +113,10 @@ class _HomeViewState extends State<HomeView> {
     } else {
       _itemNotifier = data as ItemNotifier;
     }
-    bool isEmptyCategory = isCategory && _categoryNotifier!.categories.isEmpty;
-    bool isEmptyItems = !isCategory && _itemNotifier!.items.isEmpty;
+    final bool isEmptyCategory = isCategory && _categoryNotifier!.categories.isEmpty;
+    final bool isEmptyItems = !isCategory && _itemNotifier!.items.isEmpty;
+    final bool isAdmin =
+        Provider.of<UserDataNotifier>(context).userData?.isAdmin ?? false;
     return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -142,12 +145,14 @@ class _HomeViewState extends State<HomeView> {
                   },
                 ),
               ),
-              IconButton(
-                  icon: const Icon(Icons.add_circle_outline),
-                  color: Colors.white,
-                  onPressed: () {
-                    _onTapAddItem(context);
-                  }),
+              isAdmin
+                  ? IconButton(
+                      icon: const Icon(Icons.add_circle_outline),
+                      color: Colors.white,
+                      onPressed: () {
+                        _onTapAddItem(context);
+                      })
+                  : Container(),
             ],
           ),
         ),
@@ -155,8 +160,9 @@ class _HomeViewState extends State<HomeView> {
             ? getEmptyViewWithMessage(
                 "Belum ada kategori, Silahkan tambahan kategori")
             : isEmptyItems
-                ? getEmptyViewWithMessage(
-                    "Belum ada varian " + (widget.categoryName ?? "") + ", Silahkan tambahkan varian")
+                ? getEmptyViewWithMessage("Belum ada varian " +
+                    (widget.categoryName ?? "") +
+                    ", Silahkan tambahkan varian")
                 : Container(
                     padding: const EdgeInsets.only(top: 12, bottom: 12),
                     child: Column(

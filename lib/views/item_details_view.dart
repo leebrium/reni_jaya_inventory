@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reni_jaya_inventory/models/item_model.dart';
 import 'package:reni_jaya_inventory/notifiers/item_notifier.dart';
+import 'package:reni_jaya_inventory/notifiers/user_notifier.dart';
 import 'package:reni_jaya_inventory/shared/constants.dart';
 import 'package:reni_jaya_inventory/shared/utils.dart';
 import 'package:reni_jaya_inventory/views/add_item_view.dart';
@@ -39,6 +40,8 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
   @override
   Widget build(BuildContext context) {
     final itemNotifier = Provider.of<ItemNotifier>(context);
+    final bool isAdmin =
+        Provider.of<UserDataNotifier>(context).userData?.isAdmin ?? false;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
@@ -46,12 +49,14 @@ class _ItemDetailsViewState extends State<ItemDetailsView> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             const Expanded(child: Text("Detail Barang")),
-            IconButton(
-                icon: const Icon(Icons.edit),
-                color: Colors.white,
-                onPressed: () {
-                  _onEdit();
-                }),
+            isAdmin
+                ? IconButton(
+                    icon: const Icon(Icons.edit),
+                    color: Colors.white,
+                    onPressed: () {
+                      _onEdit();
+                    })
+                : Container()
           ],
         ),
       ),

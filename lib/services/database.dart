@@ -4,6 +4,7 @@ import 'package:reni_jaya_inventory/models/category_model.dart';
 import 'package:reni_jaya_inventory/models/item_model.dart';
 import 'package:reni_jaya_inventory/models/user_data_model.dart';
 import 'package:reni_jaya_inventory/extensions/string.dart';
+import 'package:reni_jaya_inventory/notifiers/user_notifier.dart';
 
 class DatabaseService {
 
@@ -24,8 +25,8 @@ class DatabaseService {
 
   final _dbRef = FirebaseDatabase.instance.ref();
 
-  DatabaseReference get _userDataRef {
-    return _dbRef.child('user_data');
+  DatabaseReference _userDataRef(String key) {
+    return _dbRef.child('user_data/' + key);
   }
 
   DatabaseReference _itemRef(String categoryId) {
@@ -38,23 +39,15 @@ class DatabaseService {
 
   /* -> User Data */
 
-  Future insertUserData(UserData userData) async {
-    return await _userDataRef.child(userData.uid ?? '').setData({
-      fName: userData.name,
-      fEmail: userData.email,
-      fUserRole: userData.role,
-      fCreatedAt: ServerValue.timestamp,
-    });
-  }
-
   Future<UserData> getUserData(String uid) async {
-    final snapshot = await _userDataRef.child(uid).get();
-    final data = (snapshot.value) as Map<String, dynamic>;
+    final snapshot = await _userDataRef(uid).get();
+    final data = (snapshot.value) as Map;
+    final role = UserRole.values[data[fUserRole]];
     return UserData(
         uid: data[fUserId],
         name: data[fName],
         email: data[fEmail],
-        role: data[fUserRole]);
+        role: role);
   }
 
   /* User Data  <- */
