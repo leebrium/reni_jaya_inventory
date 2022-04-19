@@ -76,7 +76,7 @@ class _AddItemViewState extends State<AddItemView> {
       Positioned(
         left: 8,
         child: Container(
-          padding: EdgeInsets.only(left: 5, right: 5),
+          padding: const EdgeInsets.only(left: 5, right: 5),
           color: Colors.white,
           child: const Text(
             'Gambar',
@@ -142,7 +142,7 @@ class _AddItemViewState extends State<AddItemView> {
   }
 
   Widget _nameTextField() {
-    final infoString = widget.isCategory ? "Varian" : "Barang";
+    final infoString = widget.isCategory ? "Kategori" : "Barang";
     return TextFormField(
       validator: (val) {
         if (val!.isEmpty) {
@@ -273,12 +273,12 @@ class _AddItemViewState extends State<AddItemView> {
 
   @override
   Widget build(BuildContext context) {
+    final title = (widget.itemId == null ? "Tambah " : "Edit ") +
+        (widget.isCategory ? "Kategori" : "Barang");
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.blue,
-          title: Text(
-            widget.itemId == null ? 'Tambah Barang' : "Edit Barang",
-          ),
+          title: Text(title),
         ),
         body: _loading
             ? const Loading()

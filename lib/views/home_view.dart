@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:reni_jaya_inventory/notifiers/category_notifier.dart';
 import 'package:reni_jaya_inventory/notifiers/item_notifier.dart';
 import 'package:reni_jaya_inventory/notifiers/user_notifier.dart';
+import 'package:reni_jaya_inventory/services/auth.dart';
 import 'package:reni_jaya_inventory/shared/constants.dart';
 import 'package:reni_jaya_inventory/shared/utils.dart';
 import 'package:reni_jaya_inventory/views/add_item_view.dart';
@@ -105,6 +106,16 @@ class _HomeViewState extends State<HomeView> {
         ));
   }
 
+  void _onPopupItemSelected(String type) async {
+    switch (type) {
+      case "sign_out":
+        await Provider.of<AuthService>(context, listen: false).signOut();
+        break;
+      default:
+        break;
+    }
+  }
+
   Scaffold _getScaffold(dynamic data) {
     CategoryNotifier? _categoryNotifier;
     ItemNotifier? _itemNotifier;
@@ -113,7 +124,8 @@ class _HomeViewState extends State<HomeView> {
     } else {
       _itemNotifier = data as ItemNotifier;
     }
-    final bool isEmptyCategory = isCategory && _categoryNotifier!.categories.isEmpty;
+    final bool isEmptyCategory =
+        isCategory && _categoryNotifier!.categories.isEmpty;
     final bool isEmptyItems = !isCategory && _itemNotifier!.items.isEmpty;
     final bool isAdmin =
         Provider.of<UserDataNotifier>(context).userData?.isAdmin ?? false;
@@ -145,14 +157,16 @@ class _HomeViewState extends State<HomeView> {
                   },
                 ),
               ),
-              isAdmin
-                  ? IconButton(
-                      icon: const Icon(Icons.add_circle_outline),
-                      color: Colors.white,
-                      onPressed: () {
-                        _onTapAddItem(context);
-                      })
-                  : Container(),
+              isCategory
+                  ? PopupMenuButton(
+                      onSelected: (String type) => _onPopupItemSelected(type),
+                      icon: const Icon(Icons.more_vert),
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                            const PopupMenuItem<String>(
+                                value: "sign_out", child: Text("Sign Out")),
+                          ])
+                  : Container()
             ],
           ),
         ),
@@ -164,7 +178,7 @@ class _HomeViewState extends State<HomeView> {
                     (widget.categoryName ?? "") +
                     ", Silahkan tambahkan varian")
                 : Container(
-                    padding: const EdgeInsets.only(top: 12, bottom: 12),
+                    padding: const EdgeInsets.only(top: 12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -183,6 +197,7 @@ class _HomeViewState extends State<HomeView> {
                         ),
                         Expanded(
                           child: ListView.builder(
+                              padding: EdgeInsets.only(bottom: isAdmin ? 80 : 12),
                               itemCount: isCategory
                                   ? _categoryNotifier?.categories.length
                                   : _itemNotifier?.items.length,
@@ -250,7 +265,13 @@ class _HomeViewState extends State<HomeView> {
                         ),
                       ],
                     ),
-                  ));
+                  ),
+        floatingActionButton: isAdmin
+            ? FloatingActionButton(
+                onPressed: () => {_onTapAddItem(context)},
+                child: const Icon(Icons.add),
+              )
+            : null);
   }
 
   @override

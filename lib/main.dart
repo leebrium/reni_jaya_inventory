@@ -23,14 +23,15 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<AuthService>(
-          create: (_) => AuthService(FirebaseAuth.instance),
-        ),
+            create: (_) => AuthService(FirebaseAuth.instance)),
         StreamProvider(
           create: (context) => context.read<AuthService>().authStateChanges,
           initialData: null,
         ),
-        ChangeNotifierProvider<UserDataNotifier>(create: (_) => UserDataNotifier()),
-        ChangeNotifierProvider<CategoryNotifier>(create: (_) => CategoryNotifier()),
+        ChangeNotifierProvider<UserDataNotifier>(
+            create: (_) => UserDataNotifier()),
+        ChangeNotifierProvider<CategoryNotifier>(
+            create: (_) => CategoryNotifier()),
         ChangeNotifierProvider<ItemNotifier>(create: (_) => ItemNotifier()),
       ],
       child: const MaterialApp(
